@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  images: {
+    remotePatterns: [{hostname: "images.pexels.com"}], // whitelist Pexels
+  },
+};
 
 export default nextConfig;
