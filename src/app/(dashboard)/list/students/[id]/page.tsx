@@ -1,7 +1,9 @@
 import Announcements from "@/components/Announcements";
 import BigCalendar from "@/components/BigCalender";
+import FormModal from "@/components/FormModal";
 // import FormModal from "@/components/FormModal";
 import Performance from "@/components/Performance";
+import { role } from "@/lib/data";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -26,7 +28,7 @@ const SingleStudentPage = () => {
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Jenny Doe</h1>
-                {/* {role === "admin" && <FormModal
+                {role === "admin" && <FormModal
                   table="teacher"
                   type="update"
                   data={{
@@ -43,7 +45,7 @@ const SingleStudentPage = () => {
                     sex: "male",
                     img: "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=1200",
                   }}
-                />} */}
+                />}
               </div>
               <p className="text-sm text-gray-500">
                 Lorem ipsum, dolor sit amet consectetur adipisicing elit.
@@ -142,7 +144,7 @@ const SingleStudentPage = () => {
             <Link className="p-3 rounded-md bg-lamaSkyLight" href="/list/classes">
               Student&apos;s Lessons
             </Link>
-            <Link className="p-3 rounded-md bg-lamaPurpleLight" href="/list/students">
+            <Link className="p-3 rounded-md bg-lamaPurpleLight" href={`/list/teachers?classId=${2}`}>
               Student&apos;s Teachers
             </Link>
             <Link className="p-3 rounded-md bg-pink-50" href="/list/exams">
