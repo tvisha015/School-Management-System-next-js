@@ -98,13 +98,16 @@ const TeachersListPage = async ({
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-  const query: Prisma.TeacherWhereInput = {}
-  if(queryParams){
+  const query: Prisma.TeacherWhereInput = {};
+  if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if(value !== undefined){
-        switch(key){
+      if (value !== undefined) {
+        switch (key) {
           case "classId":
-            query.lessons = {some: {classId: {equals: parseInt(value)}}}
+            query.lessons = { some: { classId: { equals: parseInt(value) } } };
+            break;
+          case "search":
+            query.name = {contains: value, mode: "insensitive"};
         }
       }
     }
@@ -120,7 +123,7 @@ const TeachersListPage = async ({
       skip: (p - 1) * ITEM_PER_PAGE,
     }),
     prisma.teacher.count({
-      where: query
+      where: query,
     }),
   ]);
 
