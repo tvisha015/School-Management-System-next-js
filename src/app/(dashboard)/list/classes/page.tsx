@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-type ClassList = Class & {supervisor : Teacher}
+type ClassList = Class & { supervisor: Teacher };
 
 const columns = [
   {
@@ -46,7 +46,9 @@ const renderRow = (item: ClassList) => (
     <td className="flex items-center gap-4 p-4">{item.name}</td>
     <td className="hidden md:table-cell">{item.capacity}</td>
     <td className="hidden md:table-cell">{item.name[0]}</td>
-    <td className="hidden md:table-cell">{item.supervisor.name + " " + item.supervisor.surname}</td>
+    <td className="hidden md:table-cell">
+      {item.supervisor.name + " " + item.supervisor.surname}
+    </td>
     <td>
       <div className="flex items-center gap-2">
         {role === "admin" && (
@@ -77,8 +79,21 @@ const ClassesListPage = async ({
           case "supervisorId":
             query.supervisorId = value;
             break;
+          // case "search":
+          //   query.name = { contains: value, mode: "insensitive" };
+          //   break;
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } }, // class name
+              {
+                supervisor: { name: { contains: value, mode: "insensitive" } },
+              },
+              {
+                supervisor: {
+                  surname: { contains: value, mode: "insensitive" },
+                },
+              },
+            ];
             break;
         }
       }
@@ -88,7 +103,7 @@ const ClassesListPage = async ({
     prisma.class.findMany({
       where: query,
       include: {
-        supervisor: true, 
+        supervisor: true,
       },
       take: ITEM_PER_PAGE,
       skip: (p - 1) * ITEM_PER_PAGE,
@@ -119,7 +134,7 @@ const ClassesListPage = async ({
       {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={data} />
       {/* PAGINATION */}
-      <Pagination page={p} count={count}/>
+      <Pagination page={p} count={count} />
     </div>
   );
 };
