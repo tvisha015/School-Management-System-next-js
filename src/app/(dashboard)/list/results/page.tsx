@@ -2,7 +2,7 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { assignmentsData, resultsData, role } from "@/lib/data";
+import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
@@ -66,7 +66,7 @@ const renderRow = (item: ResultList) => (
       <td className="hidden md:table-cell">{item.score}</td>
       <td className="hidden md:table-cell">{item.teacherName + " " + item.teacherSurname}</td>
       <td className="hidden md:table-cell">{item.className}</td>
-      <td className="hidden md:table-cell">{item.date}</td>
+      <td className="hidden md:table-cell">{new Intl.DateTimeFormat("en-IN").format(item.startTime)}</td>
       <td>
         <div className="flex items-center gap-2">
           {role === "admin" && (
@@ -79,6 +79,7 @@ const renderRow = (item: ResultList) => (
       </td>
     </tr>
   );
+  
 const ResultListPage = async ({
   searchParams,
 }: {
@@ -94,62 +95,59 @@ const ResultListPage = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch (key) {
-          case "classId":
-            query.lesson = { classId: parseInt(value) };
-            break;
-          case "teacherId":
-            query.lesson = { teacherId: value };
+          case "studentId":
+            query.studentId = value;
             break;
           case "search":
-            query.lesson = {
-              subject: {
-                name: { contains: value, mode: "insensitive" },
-              },
-            };
+              query.OR = [
+                { exam: { title: { contains: value, mode: "insensitive" } } },
+                { student: { name: { contains: value, mode: "insensitive" } } },
+              ];
+            break;
+          default:
             break;
         }
       }
     }
   }
-  const [dataRes, count] = await prisma.$transaction([
-    prisma.result.findMany({
-      where: query,
-      include: {
-        student: {select: {name: true, surname: true}},
-        exam: {
-          include:{
-            lesson:{
-                select:{
-                  class: {select :{name:true}}
-                teachers: {select:{name:true, surname:true}}
-                }
-            }
-          }
-        },
-        assignment: {
-          include:{
-            lesson:{
-                select:{
-                  class: {select :{name:true}}
-                teachers: {select:{name:true, surname:true}}
-                }
-            }
-          }
-        },
-        }
-
-      },
-      take: ITEM_PER_PAGE,
-      skip: (p - 1) * ITEM_PER_PAGE,
-    }),
-    prisma.result.count({
-      where: query,
-    }),
-  ]);
   
+  const [dataRes, count] = await prisma.$transaction([
+  prisma.result.findMany({
+    where: query,
+    include: {
+      student: { select: { name: true, surname: true } },
+      exam: {
+        include: {
+          lesson: {
+            select: {
+              class: { select: { name: true } },
+              teacher: { select: { name: true, surname: true } },
+            },
+          },
+        },
+      },
+      assignment: {
+        include: {
+          lesson: {
+            select: {
+              class: { select: { name: true } },
+              teacher: { select: { name: true, surname: true } },
+            },
+          },
+        },
+      },
+    },
+    take: ITEM_PER_PAGE,
+    skip: (p - 1) * ITEM_PER_PAGE,
+  }),
+  prisma.result.count({
+    where: query,
+  }),
+]);
+
   const data = dataRes.map((item) => {
     const assessment = item.exam || item.assignment;
-    id(!assessment) return null;
+    if(!assessment) return null;
     const isExam = "startTime" in assessment;
     return {
       id: item.id,
