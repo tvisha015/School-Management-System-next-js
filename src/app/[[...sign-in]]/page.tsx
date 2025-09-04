@@ -7,7 +7,6 @@ import { useEffect } from "react";
 
 export default function Page() {
   const { isSignedIn, user, isLoaded } = useUser();
-  console.log("----",user)
 
   const router = useRouter();
   useEffect(() => {

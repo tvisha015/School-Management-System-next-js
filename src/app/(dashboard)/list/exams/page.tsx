@@ -2,9 +2,9 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { examsData, role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { currentUserId, role } from "@/lib/utils";
 import { Class, Exam, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -37,10 +37,14 @@ const columns = [
     accessor: "date",
     className: "hidden md:table-cell",
   },
-  {
-    header: "Actions",
-    accessor: "action",
-  },
+  ...(role === "admin" || role === "teacher"
+    ? [
+        {
+          header: "Actions",
+          accessor: "action",
+        },
+      ]
+    : []),
 ];
 
 const renderRow = (item: ExamList) => (
@@ -59,7 +63,7 @@ const renderRow = (item: ExamList) => (
 
     <td>
       <div className="flex items-center gap-2">
-        {role === "admin" && (
+        {(role === "admin" || role === "teacher") && (
           <>
             <FormModal table="exam" type="update" data={item} />
             <FormModal table="exam" type="delete" id={item.id} />
@@ -80,26 +84,46 @@ const ExamListPage = async ({
 
   // URL PARAMS CONDITION
   const query: Prisma.ExamWhereInput = {};
+  query.lesson = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch (key) {
           case "classId":
-            query.lesson = {classId: parseInt(value)};
+            query.lesson.classId = parseInt(value);
             break;
           case "teacherId":
-            query.lesson = {teacherId: value};
+            query.lesson.teacherId = value;
             break;
-          case "search":  
-            query.lesson = {
-              subject: {
-                name: { contains: value, mode: "insensitive" },
-              },
+          case "search":
+            query.lesson.subject = {
+              name: { contains: value, mode: "insensitive" },
             };
+            break;
+          default:
             break;
         }
       }
     }
+  }
+
+  // ROLE CONDITION
+  switch (role) {
+    case "admin":
+      break;
+    case "teacher":
+      query.lesson.teacherId = currentUserId!;
+      break;
+    case "student":
+      query.lesson.class = { students: { some: { id: currentUserId! } } };
+      break;
+    case "parent":
+      query.lesson.class = {
+        students: { some: { parentId: currentUserId! } },
+      };
+      break;
+    default:
+      break;
   }
   const [data, count] = await prisma.$transaction([
     prisma.exam.findMany({
@@ -142,7 +166,7 @@ const ExamListPage = async ({
       {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={data} />
       {/* PAGINATION */}
-      <Pagination page={p} count={count}/>
+      <Pagination page={p} count={count} />
     </div>
   );
 };

@@ -2,9 +2,9 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role, teachersData } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { role } from "@/lib/utils";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,10 +41,14 @@ const columns = [
     accessor: "address",
     className: "hidden lg:table-cell text-xs md:text-sm lg:text-base",
   },
-  {
-    header: "Actions",
-    accessor: "action",
-  },
+  ...(role === "admin"
+    ? [
+        {
+          header: "Actions",
+          accessor: "action",
+        },
+      ]
+    : []),
 ];
 
 const renderRow = (item: TeacherList) => (
@@ -107,7 +111,7 @@ const TeachersListPage = async ({
             query.lessons = { some: { classId: { equals: parseInt(value) } } };
             break;
           case "search":
-            query.name = {contains: value, mode: "insensitive"};
+            query.name = { contains: value, mode: "insensitive" };
             break;
           default:
             break;
